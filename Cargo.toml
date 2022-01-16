@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "sdx_art",
+    "sdx_art_lib",
+    "sdx_art_cli",
+    "generative_artistry"
+]

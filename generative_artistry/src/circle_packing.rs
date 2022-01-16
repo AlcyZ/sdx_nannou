@@ -119,11 +119,7 @@ fn try_position_circle(window: &Rect, circles: &[Circle], model: &Model) -> Opti
     None
 }
 
-fn try_create_circle(
-    window: &Rect,
-    circles: &[Circle],
-    model: &Model,
-) -> Option<Circle> {
+fn try_create_circle(window: &Rect, circles: &[Circle], model: &Model) -> Option<Circle> {
     let mut circle = try_position_circle(window, circles, model)?;
 
     for radius in model.descriptor.min_radius..model.descriptor.max_radius {

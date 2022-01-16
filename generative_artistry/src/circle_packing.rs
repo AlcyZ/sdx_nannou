@@ -32,6 +32,26 @@ impl CirclePackingDescriptor {
             create_circle_attempts,
         }
     }
+
+    fn from_statics() -> CirclePackingDescriptor {
+        let (line_width, min_radius, max_radius, total_circles, create_circle_attempts) = unsafe {
+            (
+                LINE_WIDTH,
+                MIN_RADIUS,
+                MAX_RADIUS,
+                TOTAL_CIRCLES,
+                CREATE_CIRCLE_ATTEMPTS,
+            )
+        };
+
+        CirclePackingDescriptor {
+            line_width,
+            min_radius,
+            max_radius,
+            total_circles,
+            create_circle_attempts,
+        }
+    }
 }
 
 pub fn present(descriptor: CirclePackingDescriptor) {
@@ -51,16 +71,20 @@ pub fn present(descriptor: CirclePackingDescriptor) {
 
 struct Model {
     _window: window::Id,
+    descriptor: CirclePackingDescriptor,
 }
 
 fn model(app: &App) -> Model {
     let _window = app.new_window().view(view).build().unwrap();
-    Model { _window }
+    Model {
+        _window,
+        descriptor: CirclePackingDescriptor::from_statics(),
+    }
 }
 
 fn update(_app: &App, _model: &mut Model, _update: Update) {}
 
-fn view(app: &App, _model: &Model, frame: Frame) {
+fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
     let window = app.window_rect();
 
@@ -68,25 +92,20 @@ fn view(app: &App, _model: &Model, frame: Frame) {
 
     let mut circles = vec![];
 
-    let total = unsafe { TOTAL_CIRCLES };
-    for _ in 0..total {
-        if let Some(circle) = create_and_draw_circle(&window, &draw, &circles) {
+    for _ in 0..model.descriptor.total_circles {
+        if let Some(circle) = try_create_circle(&window, &circles, model) {
+            circle.draw(&draw);
             circles.push(circle);
         }
     }
 
-    // draw.ellipse().color(STEELBLUE);
-
     draw.to_frame(app, &frame).unwrap();
 }
 
-fn foo(window: &Rect, circles: &[Circle]) -> Option<Circle> {
-    let (attempts, min_radius, line_width) =
-        unsafe { (CREATE_CIRCLE_ATTEMPTS, MIN_RADIUS, LINE_WIDTH) };
-
-    for _ in 0..attempts {
-        let circle = Circle::new(min_radius as f32)
-            .with_weight(line_width)
+fn try_position_circle(window: &Rect, circles: &[Circle], model: &Model) -> Option<Circle> {
+    for _ in 0..model.descriptor.create_circle_attempts {
+        let circle = Circle::new(model.descriptor.min_radius as f32)
+            .with_weight(model.descriptor.line_width)
             .with_x_y(
                 random_range::<f32>(window.top_left().x, window.bottom_right().x),
                 random_range::<f32>(window.top_left().y, window.bottom_right().y),
@@ -100,12 +119,14 @@ fn foo(window: &Rect, circles: &[Circle]) -> Option<Circle> {
     None
 }
 
-fn create_and_draw_circle(window: &Rect, draw: &Draw, circles: &[Circle]) -> Option<Circle> {
-    let mut circle = foo(window, circles)?;
+fn try_create_circle(
+    window: &Rect,
+    circles: &[Circle],
+    model: &Model,
+) -> Option<Circle> {
+    let mut circle = try_position_circle(window, circles, model)?;
 
-    let (min, max) = unsafe { (MIN_RADIUS, MAX_RADIUS) };
-
-    for radius in min..max {
+    for radius in model.descriptor.min_radius..model.descriptor.max_radius {
         circle = circle.with_radius((radius) as f32);
         if circle_has_collision(&circle, circles, window) {
             circle = circle.with_radius((radius - 1) as f32);
@@ -113,8 +134,6 @@ fn create_and_draw_circle(window: &Rect, draw: &Draw, circles: &[Circle]) -> Opt
             break;
         }
     }
-
-    circle.draw(draw);
 
     Some(circle)
 }

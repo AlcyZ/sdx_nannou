@@ -13,7 +13,20 @@ fn main() -> Result<()> {
                 .about("Generative Artistry Tutorial implementations")
                 .subcommand(
                     App::new("tiled_lines")
-                        .about("Tiled lines tutorial implementation of generative artistry"),
+                        .about("Tiled lines tutorial implementation of generative artistry")
+                        .arg(Arg::new("size")
+                            .help("Size of canvas")
+                            .long("size")
+                            .value_name("SIZE")
+                            .takes_value(true)
+                            .default_value("320"))
+                        .arg(Arg::new("steps")
+                            .help("Tiling steps. Less results in more iterations of tiles.")
+                            .short('s')
+                            .long("steps")
+                            .value_name("STEPS")
+                            .takes_value(true)
+                            .default_value("20")),
                 )
                 .subcommand(
                     App::new("circle_packing")
@@ -107,7 +120,10 @@ fn main() -> Result<()> {
         }
 
         if let Some(_args) = args.subcommand_matches("tiled_lines") {
-            generative_artistry::tiled_lines::present();
+            let size = _args.value_of("size").unwrap().parse::<u32>().context("Can not parse size argument!")?;
+            let steps = _args.value_of("steps").unwrap().parse::<i32>().context("Can not parse steps argument!")?;
+
+            generative_artistry::tiled_lines::present(size, steps);
         }
     }
 
